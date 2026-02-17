@@ -8932,9 +8932,7 @@ For credit balance threshold alerts, you can listen for two event types:
 In your application, set up an HTTP handler to accept a POST request containing the event, and verify the signature of the event.
 
 ```ruby
-# Set your secret key. Remember to switch to your live secret key in production.
-# See your keys here: https://dashboard.stripe.com/apikeys
-Stripe.api_key = 'sk_test_BQokikJOvBiI2HlWgH4olfQ2'
+
 
 post '/webhook' do
 # You can use webhooks to receive information about asynchronous payment events.
