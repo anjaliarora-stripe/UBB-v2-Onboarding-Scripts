@@ -221,7 +221,7 @@ POST
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/meters \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -d display_name="Search API Calls" \
   -d event_name=ai_search_api \
   -d "default_aggregation[formula]"=sum \
@@ -276,7 +276,7 @@ POST
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/meters/mtr_test_61Q8nQMqIFK9fRQmr41CMAXJrFdZ5MnA \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -d display_name="Updated Display Name"
 Response
 {
@@ -321,7 +321,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/meters/mtr_test_61Q8nQMqIFK9fRQmr41CMAXJrFdZ5MnA \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "id": "mtr_test_61Q8nQMqIFK9fRQmr41CMAXJrFdZ5MnA",
@@ -386,7 +386,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/meters \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "object": "list",
@@ -437,7 +437,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v1/billing/meters/mtr_test_61Q8nQMqIFK9fRQmr41CMAXJrFdZ5MnA/deactivate \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "id": "mtr_test_61Q8nQMqIFK9fRQmr41CMAXJrFdZ5MnA",
@@ -481,7 +481,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v1/billing/meters/mtr_test_61Q8nQMqIFK9fRQmr41CMAXJrFdZ5MnA/reactivate \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "id": "mtr_test_61Q8nQMqIFK9fRQmr41CMAXJrFdZ5MnA",
@@ -617,7 +617,7 @@ POST
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/meter_events \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -d event_name=ai_search_api \
   -d "payload[value]"=25 \
   -d "payload[stripe_customer_id]"=cus_NciAYcXfLnqBoz \
@@ -788,7 +788,7 @@ GET
 Server-side language
 cURL
 curl -G https://api.stripe.com/v1/billing/meters/mtr_test_61Q8nQMqIFK9fRQmr41CMAXJrFdZ5MnA/event_summaries \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -d customer=cus_Pp40waj64hdRxb \
   -d start_time=1711584000 \
   -d end_time=1711666800 \
@@ -1183,7 +1183,7 @@ POST
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/credit_grants \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -d name="Purchased Credits" \
   -d customer=cus_QrvQguzkIK8zTj \
   -d "amount[monetary][currency]"=usd \
@@ -1251,7 +1251,7 @@ POST
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/credit_grants/credgr_test_61R9rpFu8SZkXPTkU41L6nFOS1ekDKoa \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -d "metadata[cost_basis]"="0.9" \
   -d expires_at=1759302000
 Response
@@ -1307,7 +1307,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/credit_grants/credgr_test_61R9a6NUWsRmOW3RM41L6nFOS1ekDGHo \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "id": "credgr_test_61R9a6NUWsRmOW3RM41L6nFOS1ekDGHo",
@@ -1373,7 +1373,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/credit_grants \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "object": "list",
@@ -1432,7 +1432,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v1/billing/credit_grants/credgr_test_61R9rm9vto9SMMvt041L6nFOS1ekDCim/expire \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "id": "credgr_test_61R9rm9vto9SMMvt041L6nFOS1ekDCim",
@@ -1484,7 +1484,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v1/billing/credit_grants/credgr_test_61R9rnNTDmZ657a2r41L6nFOS1ekD5Ae/void \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "id": "credgr_test_61R9rnNTDmZ657a2r41L6nFOS1ekD5Ae",
@@ -1615,7 +1615,7 @@ GET
 Server-side language
 cURL
 curl -G https://api.stripe.com/v1/billing/credit_balance_summary \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -d customer=cus_QsEHa3GKweMwih \
   -d "filter[type]"=credit_grant \
   -d "filter[credit_grant]"=credgr_test_61R9rvFh1HgrFIoCp41L6nFOS1ekDCeW
@@ -1772,7 +1772,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/credit_balance_transactions/cbtxn_test_61R9ZljjaFmdidb6e41L6nFOS1ekD9Ue \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "id": "cbtxn_test_61R9ZljjaFmdidb6e41L6nFOS1ekD9Ue",
@@ -1841,7 +1841,7 @@ GET
 Server-side language
 cURL
 curl -G https://api.stripe.com/v1/billing/credit_balance_transactions \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -d customer=cus_QrvQguzkIK8zTj \
   -d credit_grant=credgr_test_61R9ZkIkIzLSp0xze41L6nFOS1ekDTPE
 Response
@@ -2030,7 +2030,7 @@ POST
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/alerts \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -d title="API Request usage alert" \
   -d alert_type=usage_threshold \
   -d "usage_threshold[gte]"=10000 \
@@ -2068,7 +2068,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/alerts/alrt_12345 \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "id": "alrt_12345",
@@ -2127,7 +2127,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing/alerts \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "data": [
@@ -2177,7 +2177,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v1/billing/alerts/alrt_12345/activate \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "id": "alrt_12345",
@@ -2210,7 +2210,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v1/billing/alerts/alrt_12345/archive \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "id": "alrt_12345",
@@ -2243,7 +2243,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v1/billing/alerts/alrt_12345/deactivate \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:"
+  -u "sk_123:"
 Response
 {
   "id": "alrt_12345",
@@ -2463,7 +2463,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v2/billing/metered_items \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --json '{
     "display_name": "Premium Chat API",
@@ -2608,7 +2608,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v2/billing/metered_items/bli_test_61SGRtYMvrf176Kmm16RM8VQESSQ4t1K5KYFAmKUSVdY \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --json '{
     "display_name": "Pro Chat API",
@@ -2705,7 +2705,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/metered_items/bli_test_61SGRtYMvrf176Kmm16RM8VQESSQ4t1K5KYFAmKUSVdY \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -2766,7 +2766,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/metered_items \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -3550,7 +3550,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v2/billing/license_fees \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --json '{
     "currency": "usd",
@@ -3810,7 +3810,7 @@ POST
 /v2/billing/license_fees/:id
 cURL
 curl -X POST https://api.stripe.com/v2/billing/license_fees/licf_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --json '{
     "display_name": "Updated Monthly fee",
@@ -4008,7 +4008,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/license_fees/licf_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -4134,7 +4134,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/license_fees/licf_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy/versions/licfv_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -4199,7 +4199,7 @@ GET
 Server-side language
 cURL
 curl -G https://api.stripe.com/v2/billing/license_fees \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   -d "lookup_keys[0]"=monthly-fee
 Response
@@ -4294,7 +4294,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/license_fees/licf_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy/versions \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -4812,7 +4812,7 @@ POST
 /v2/billing/intents
 cURL
 curl -X POST https://api.stripe.com/v2/billing/intents \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --json '{
     "cadence": "bc_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy",
@@ -4937,7 +4937,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/intents/bilint_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -5052,7 +5052,7 @@ GET
 /v2/billing/intents/:id/actions/:id
 cURL
 curl https://api.stripe.com/v2/billing/intents/bilint_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy/actions/bilinti_61T9VNT6aGFjxfNPx16SBbsMNLSQJnWcho4VDz0fYVOq \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -5117,7 +5117,7 @@ GET
 /v2/billing/intents/:id/actions
 cURL
 curl https://api.stripe.com/v2/billing/intents/bilint_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy/actions \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -5178,7 +5178,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/intents \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -5301,7 +5301,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v2/billing/intents/bilint_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy/cancel \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -5483,7 +5483,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v2/billing/intents/bilint_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy/commit \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -5600,7 +5600,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v2/billing/intents/bilint_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy/release_reservation \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -5725,7 +5725,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v2/billing/intents/bilint_61SbQ4ZVMJ2ESqq2416S40x4RVA8P2F2ShZStd6x6RCy/reserve \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -6237,7 +6237,7 @@ POST
 /v2/billing/bill_settings
 cURL
 curl -X POST https://api.stripe.com/v2/billing/bill_settings \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --json '{
     "display_name": "Automatic tax settings",
@@ -6402,7 +6402,7 @@ POST
 /v2/billing/collection_settings
 cURL
 curl -X POST https://api.stripe.com/v2/billing/collection_settings \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --json '{
     "collection_method": "automatic",
@@ -6550,7 +6550,7 @@ POST
 /v2/billing/bill_settings/:id
 cURL
 curl -X POST https://api.stripe.com/v2/billing/bill_settings/bblset_test_61SIqALsEreXk4vb616S0Sp34rSQ5rdid9OCzVKXYQrI \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --json '{
     "display_name": "New name"
@@ -6729,7 +6729,7 @@ POST
 /v2/billing/collection_settings/:id
 cURL
 curl -X POST https://api.stripe.com/v2/billing/collection_settings/bclset_test_61SIqALsEreXk4vb616S0Sp34rSQ5rdid9OCzVKXYQrI \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --json '{
     "display_name": "New name",
@@ -6829,7 +6829,7 @@ GET
 /v2/billing/bill_settings/:id
 cURL
 curl https://api.stripe.com/v2/billing/bill_settings/bblset_test_61SIqALsEreXk4vb616S0Sp34rSQ5rdid9OCzVKXYQrI \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -6920,7 +6920,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/bill_settings/bblset_test_61T2gNXemFgqleYpd16Sg5eV2tSQs27bdBltKwQGm6qO/versions/bblsetv_test_61T2gNXz4yci3XdEH16Sg5eV2tSQs27bdBltKwQGm4k4 \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -7036,7 +7036,7 @@ GET
 /v2/billing/collection_settings/:id
 cURL
 curl https://api.stripe.com/v2/billing/collection_settings/bclset_test_61SIqALsEreXk4vb616S0Sp34rSQ5rdid9OCzVKXYQrI \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -7135,7 +7135,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/collection_settings/bclset_test_61T2gtFM6pBAo30oj16Sg5eV2tSQs27bdBltKwQGmSI4/versions/bclsetv_test_61T2gtFFCeOrTS7PB16Sg5eV2tSQs27bdBltKwQGm1No \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -7239,7 +7239,7 @@ GET
 /v2/billing/bill_settings
 cURL
 curl https://api.stripe.com/v2/billing/bill_settings \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -7313,7 +7313,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/bill_settings/bblset_test_61T2gNXemFgqleYpd16Sg5eV2tSQs27bdBltKwQGm6qO/versions \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -7386,7 +7386,7 @@ GET
 /v2/billing/collection_settings
 cURL
 curl https://api.stripe.com/v2/billing/collection_settings \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -7456,7 +7456,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/collection_settings/bclset_test_61T2gtFM6pBAo30oj16Sg5eV2tSQs27bdBltKwQGmSI4/versions \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -7750,7 +7750,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v2/billing/profiles \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --json '{
     "customer": "cus_123",
@@ -7892,7 +7892,7 @@ POST
 Server-side language
 cURL
 curl -X POST https://api.stripe.com/v2/billing/profiles/bilp_123 \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --json '{
     "lookup_key": "business_profile_cus_123",
@@ -7997,7 +7997,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v2/billing/profiles/bilp_123 \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -8092,7 +8092,7 @@ GET
 /v2/billing/profiles
 cURL
 curl -G https://api.stripe.com/v2/billing/profiles \
-  -H "Authorization: Bearer sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM" \
+  -H "Authorization: Bearer sk_123" \
   -H "Stripe-Version: 2025-12-15.preview" \
   -d default_payment_method=pm_123
 Response
@@ -8469,7 +8469,7 @@ POST
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing_portal/configurations \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -H "Stripe-Version: 2025-12-15.preview" \
   -d "features[customer_update][allowed_updates][]"=email \
   -d "features[customer_update][allowed_updates][]"=tax_id \
@@ -8588,7 +8588,7 @@ POST
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing_portal/configurations/bpc_1MrnZsLkdIwHu7ixNiQL1xPM \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -H "Stripe-Version: 2025-12-15.preview" \
   --data-urlencode "business_profile[privacy_policy_url]"="https://example.com/new_privacy_url" \
   --data-urlencode "business_profile[terms_of_service_url]"="https://example.com/new_terms_of_service_url"
@@ -8667,7 +8667,7 @@ GET
 Server-side language
 cURL
 curl https://api.stripe.com/v1/billing_portal/configurations/bpc_1MrnZsLkdIwHu7ixNiQL1xPM \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -H "Stripe-Version: 2025-12-15.preview"
 Response
 {
@@ -8763,7 +8763,7 @@ GET
 Server-side language
 cURL
 curl -G https://api.stripe.com/v1/billing_portal/configurations \
-  -u "sk_test_51SskczBZs1VHeZuOQ32NHOV8DpJkq7FGsO5CJC3JT4pkvqSJfTxXtSROFf2YSkhbpiHG6wguxnOJT2xtI4VBFnju00VE0NAscM:" \
+  -u "sk_123:" \
   -H "Stripe-Version: 2025-12-15.preview" \
   -d limit=3
 Response
