@@ -1,0 +1,4 @@
+# Environment variables
+.env
+meter_counter.json
+__pycache__/
