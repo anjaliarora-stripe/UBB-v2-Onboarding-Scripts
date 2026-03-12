@@ -95,7 +95,7 @@ def create_checkout_session_for_pricing_plan(customer_id, pricing_plan_id, prici
     Create a checkout session for pricing plan subscription.
     Uses the checkout_product_catalog_preview to support pricing plans.
     """
-    print("\n[10/11] Creating Checkout Session...")
+    print("\n[9/14] Creating Checkout Session...")
     
     # Create a temporary client with checkout preview version
     import requests
@@ -140,7 +140,7 @@ def create_pricing_plan_and_subscription(plan_number):
         # ============================================================================
         # STEP 1: Create Pricing Plan
         # ============================================================================
-        print("\n[1/11] Creating Pricing Plan...")
+        print("\n[1/14] Creating Pricing Plan...")
     
         plan_name = f"Credit Burndown Plan {meter_number}" if meter_number > 1 else "Credit Burndown Plan"
         pricing_plan_response = client.raw_request(
@@ -157,7 +157,7 @@ def create_pricing_plan_and_subscription(plan_number):
         # ============================================================================
         # STEP 2: Create Meter (tracks usage)
         # ============================================================================
-        print("\n[2/11] Creating Meter...")
+        print("\n[2/14] Creating Meter...")
         
         # Use the v1 billing meters API via StripeClient
         meter_name = f"Meter {meter_number}" if meter_number > 1 else "Meter"
@@ -181,7 +181,7 @@ def create_pricing_plan_and_subscription(plan_number):
         # ============================================================================
         # STEP 3: Create Metered Items (billable items)
         # ============================================================================
-        print("\n[3/11] Creating Metered Items...")
+        print("\n[3/14] Creating Metered Items...")
         
         # Get dimension values from config
         dimension_values_map = METER_CONFIG.get('dimension_values', {})
@@ -237,7 +237,7 @@ def create_pricing_plan_and_subscription(plan_number):
         # ============================================================================
         # STEP 4: Create Rate Card
         # ============================================================================
-        print("\n[4/11] Creating Rate Card...")
+        print("\n[4/14] Creating Rate Card...")
         
         rate_card_response = client.raw_request(
             "post",
@@ -255,7 +255,7 @@ def create_pricing_plan_and_subscription(plan_number):
         # ============================================================================
         # STEP 5: Add Rates to Rate Card
         # ============================================================================
-        print("\n[5/11] Adding Rates to Rate Card...")
+        print("\n[5/14] Adding Rates to Rate Card...")
         
         # Define pricing per dimension value (cents)
         pricing_map = {
@@ -290,7 +290,7 @@ def create_pricing_plan_and_subscription(plan_number):
         # ============================================================================
         # STEP 6: Attach Rate Card to Pricing Plan
         # ============================================================================
-        print("\n[6/11] Attaching Rate Card to Pricing Plan...")
+        print("\n[6/14] Attaching Rate Card to Pricing Plan...")
         
         component_response = client.raw_request(
             "post",
@@ -306,7 +306,7 @@ def create_pricing_plan_and_subscription(plan_number):
         # ============================================================================
         # STEP 7: Activate Pricing Plan
         # ============================================================================
-        print("\n[7/11] Activating Pricing Plan...")
+        print("\n[7/14] Activating Pricing Plan...")
         
         activate_response = client.raw_request(
             "post",
@@ -322,7 +322,7 @@ def create_pricing_plan_and_subscription(plan_number):
         # ============================================================================
         # STEP 8: Create Test Clock + Customer
         # ============================================================================
-        print("\n[8/11] Creating Test Clock...")
+        print("\n[8/14] Creating Test Clock...")
         
         test_clock = client.test_helpers.test_clocks.create({
             #add a time offset of 1 day
@@ -331,7 +331,7 @@ def create_pricing_plan_and_subscription(plan_number):
         ids['test_clock_id'] = test_clock.id
         print(f"  ✓ Test Clock Created: {test_clock.id}")
         
-        print("\n[8/11] Creating Customer...")
+        print("\n[8/14] Creating Customer...")
         
         customer_email = f"testuser{meter_number}@example.com" if meter_number > 1 else "testuser@example.com"
         customer = client.customers.create({
@@ -374,8 +374,22 @@ def create_pricing_plan_and_subscription(plan_number):
             # BILLING INTENT FLOW (Programmatic)
             # ========================================================================
 
-            # STEP 9: Create Billing Profile
-            print("\n[9/13] Creating Billing Profile...")
+            # STEP 9: Create Collection Setting
+            print("\n[9/14] Creating Collection Setting...")
+            
+            collection_setting_response = client.raw_request(
+                "post",
+                "/v2/billing/collection_settings",
+                collection_method="send_invoice",
+                display_name="Send Invoice Collection"
+            )
+            collection_setting = client.deserialize(collection_setting_response, api_mode='V2')
+            ids['collection_setting_id'] = collection_setting.id
+            print(f"  ✓ Collection Setting Created: {collection_setting.id}")
+            print(f"  Collection Method: send_invoice")
+
+            # STEP 10: Create Billing Profile
+            print("\n[10/14] Creating Billing Profile...")
             
             billing_profile_response = client.raw_request(
                 "post",
@@ -387,8 +401,8 @@ def create_pricing_plan_and_subscription(plan_number):
             ids['billing_profile_id'] = billing_profile.id
             print(f"  ✓ Billing Profile Created: {billing_profile.id}")
 
-            # STEP 10: Create Billing Cadence (Monthly)
-            print("\n[10/13] Creating Billing Cadence...")
+            # STEP 11: Create Billing Cadence (Monthly)
+            print("\n[11/14] Creating Billing Cadence...")
             
             billing_cadence_response = client.raw_request(
                 "post",
@@ -399,15 +413,21 @@ def create_pricing_plan_and_subscription(plan_number):
                 billing_cycle={
                     "type": "month",
                     "interval_count": 1
+                },
+                settings={
+                    "collection": {
+                        "id": collection_setting.id
+                    }
                 }
             )
             billing_cadence = client.deserialize(billing_cadence_response, api_mode='V2')
             ids['billing_cadence_id'] = billing_cadence.id
             print(f"  ✓ Billing Cadence Created: {billing_cadence.id}")
             print(f"  Interval: Monthly")
+            print(f"  Collection Setting: {collection_setting.id} (send_invoice)")
 
-            # STEP 11: Create Billing Intent
-            print("\n[11/13] Creating Billing Intent...")
+            # STEP 12: Create Billing Intent
+            print("\n[12/14] Creating Billing Intent...")
             
             billing_intent_response = client.raw_request(
                 "post",
@@ -429,8 +449,8 @@ def create_pricing_plan_and_subscription(plan_number):
             ids['billing_intent_id'] = billing_intent.id
             print(f"  ✓ Billing Intent Created: {billing_intent.id}")
 
-            # STEP 12: Commit Billing Intent (Activate Subscription)
-            print("\n[12/13] Reserving Billing Intent (Activating Subscription)...")
+            # STEP 13: Commit Billing Intent (Activate Subscription)
+            print("\n[13/14] Reserving Billing Intent (Activating Subscription)...")
             
             commit_response = client.raw_request(
                 "post",
@@ -440,7 +460,7 @@ def create_pricing_plan_and_subscription(plan_number):
             print(f"  ✓ Billing Intent Reserved")
 
 
-            print("\n[12/13] Committing Billing Intent (Activating Subscription)...")
+            print("\n[13/14] Committing Billing Intent (Activating Subscription)...")
             
             commit_response = client.raw_request(
                 "post",
@@ -451,9 +471,9 @@ def create_pricing_plan_and_subscription(plan_number):
             print(f"  ✓ Subscription Activated!")
 
         # ============================================================================
-        # STEP 13: Grant Initial Credits
+        # STEP 14: Grant Initial Credits
         # ============================================================================
-        print("\n[13/13] Granting Initial Credits to Customer...")
+        print("\n[14/14] Granting Initial Credits to Customer...")
         
         credit_grant = client.billing.credit_grants.create({
             "amount": {
@@ -487,7 +507,13 @@ def create_pricing_plan_and_subscription(plan_number):
                         "value": 100,  # Alert when balance drops to $1.00
                         "currency": "usd"
                     }
-                }
+                },
+                "filters": [
+                    {
+                        "type": "customer",
+                        "customer": customer.id
+                    }
+                ]
             },
         )
         ids['alert_id'] = alert.id
@@ -515,6 +541,7 @@ def create_pricing_plan_and_subscription(plan_number):
             print(f"  • Checkout Session: {ids['checkout_session_id']}")
             print(f"  • Checkout URL:     {ids['checkout_session_url']}")
         else:
+            print(f"  • Collection Setting: {ids['collection_setting_id']}")
             print(f"  • Billing Profile: {ids['billing_profile_id']}")
             print(f"  • Billing Cadence: {ids['billing_cadence_id']}")
             print(f"  • Billing Intent:  {ids['billing_intent_id']}")
@@ -557,6 +584,8 @@ stripe.billing.MeterEvent.create(
         print("  • v2.billing.pricing_plan_subscription.servicing_activated")
         print("  • v2.billing.pricing_plan_subscription.servicing_canceled")
     
+        return ids
+
     except Exception as e:
         print(f"\n❌ Error creating plan {plan_number}: {str(e)}")
         import traceback

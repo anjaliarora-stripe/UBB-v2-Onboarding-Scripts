@@ -139,7 +139,7 @@ def send_usage_to_pricing_plan(customer_id: str, pricing_plan_id: str, usage_val
                 # Build payload with dimension
                 payload = {
                     'stripe_customer_id': customer_id,
-                    'tokens_used': str(usage_value),  # Use the correct event_payload_key
+                    'quantity': str(usage_value),  # Use the correct event_payload_key
                     dimension_key: dimension_value     # Add dimension (e.g., 'model': 'basic')
                 }
                 
@@ -165,7 +165,7 @@ def send_usage_to_pricing_plan(customer_id: str, pricing_plan_id: str, usage_val
                     event_name=event_name,
                     payload={
                         'stripe_customer_id': customer_id,
-                        'tokens_used': str(usage_value)
+                        'quantity': str(usage_value)
                     }
                 )
                 print(f"✓ Sent usage to '{display_name}'")
