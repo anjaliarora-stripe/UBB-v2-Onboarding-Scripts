@@ -1,0 +1,84 @@
+{
+  "pricing_plan": {
+    "display_name": "AI usage demo {timestamp}",
+    "currency": "usd",
+    "tax_behavior": "exclusive"
+  },
+  "meter": {
+    "event_name": "ai_usage",
+    "display_name": "AI usage meter {timestamp}",
+    "reuse_if_exists": true,
+    "default_aggregation": {
+      "formula": "sum"
+    }
+  },
+  "rates": [
+    {
+      "metered_item_display_name": "AI usage units",
+      "unit_amount_cents": "1"
+    }
+  ],
+  "rate_card": {
+    "display_name": "AI usage rates",
+    "service_interval": "month",
+    "service_interval_count": 1,
+    "currency": "usd",
+    "tax_behavior": "exclusive"
+  },
+  "license": {
+    "licensed_item_display_name": "Platform access",
+    "fee_display_name": "Monthly license",
+    "unit_amount_cents": "1000",
+    "currency": "usd",
+    "service_interval": "month",
+    "service_interval_count": 1,
+    "tax_behavior": "exclusive",
+    "subscribe_quantity": 1
+  },
+  "service_action": {
+    "credit_grant_name": "Included usage credits",
+    "credit_grant_cents": 1000,
+    "credit_grant_currency": "usd",
+    "service_interval": "month",
+    "service_interval_count": 1
+  },
+  "billing": {
+    "collection_method": "automatic",
+    "collection_display_name": "Automatic collection",
+    "billing_profile_display_name": "Primary Billing Profile",
+    "cadence": {
+      "billing_cycle_type": "month",
+      "billing_cycle_interval_count": 1
+    },
+    "billing_intent_currency": "usd",
+    "shared_test_clock": true,
+    "test_clock_offset_seconds": 86400,
+    "attach_tok_visa": true
+  },
+  "customers": [
+    {
+      "email": "ubb_demo_1_{timestamp}@example.com",
+      "name": "UBB demo customer 1",
+      "description": "Config-driven UBB demo",
+      "usage": {
+        "units": 0
+      }
+    },
+    {
+      "email": "ubb_demo_2_{timestamp}@example.com",
+      "name": "UBB demo customer 2",
+      "description": "Config-driven UBB demo",
+      "usage": {
+        "units": 1000
+      }
+    },
+    {
+      "email": "ubb_demo_3_{timestamp}@example.com",
+      "name": "UBB demo customer 3",
+      "description": "Config-driven UBB demo",
+      "usage": {
+        "units": 4600
+      }
+    }
+  ]
+}
