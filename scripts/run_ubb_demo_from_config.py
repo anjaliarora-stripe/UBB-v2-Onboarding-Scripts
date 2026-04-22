@@ -14,7 +14,16 @@ import stripe
 from dotenv import load_dotenv
 from stripe import StripeClient
 
-STRIPE_PREVIEW = "2026-01-28.preview"
+from stripe_v2_billing_helpers import (
+    STRIPE_PREVIEW_VERSION,
+    billing_intent_reserve_and_commit,
+    find_license_plan_component_id,
+    meter_value_payload_key,
+    resolve_license_fee_version,
+    resolve_rate_card_version,
+    send_meter_event,
+    tok_visa_payment_method_for_customer,
+)
 
 REQUIRED_TOP = (
     "pricing_plan",
@@ -225,18 +234,6 @@ def validate_config(cfg: dict[str, Any], path: str) -> None:
         )
 
 
-def _meter_value_payload_key(meter: Any) -> str:
-    vs = getattr(meter, "value_settings", None)
-    if not vs:
-        return "value"
-    key = getattr(vs, "event_payload_key", None)
-    if key:
-        return str(key)
-    if isinstance(vs, dict):
-        return str(vs.get("event_payload_key") or "value")
-    return "value"
-
-
 def _get_or_create_meter(
     client: StripeClient,
     cfg: dict[str, Any],
@@ -266,117 +263,6 @@ def _get_or_create_meter(
     return meter, False, event_name
 
 
-def _license_fee_attach_version(lf: Any) -> str | None:
-    v = getattr(lf, "live_version", None)
-    if v:
-        return v
-    if isinstance(lf, dict):
-        return lf.get("live_version")
-    return None
-
-
-def _find_license_plan_component_id(client: StripeClient, pricing_plan_id: str) -> str | None:
-    resp = client.raw_request(
-        "get", f"/v2/billing/pricing_plans/{pricing_plan_id}/components"
-    )
-    body = client.deserialize(resp, api_mode="V2")
-    for c in body.get("data", []):
-        if c.get("type") == "license_fee":
-            return c.get("id")
-    return None
-
-
-def _create_and_attach_test_card_pm(customer_id: str) -> str:
-    pm = stripe.PaymentMethod.create(type="card", card={"token": "tok_visa"})
-    stripe.PaymentMethod.attach(pm.id, customer=customer_id)
-    return pm.id
-
-
-def _send_meter_event(
-    customer_id: str,
-    units: int,
-    event_name: str,
-    value_payload_key: str,
-    dimensions: dict[str, str] | None = None,
-) -> None:
-    pl: dict[str, str] = {
-        "stripe_customer_id": customer_id,
-        value_payload_key: str(units),
-    }
-    if dimensions:
-        for k, v in dimensions.items():
-            pl[str(k)] = str(v)
-    stripe.billing.MeterEvent.create(event_name=event_name, payload=pl)
-
-
-def _amount_details_total(reserved: Any) -> int:
-    ad = getattr(reserved, "amount_details", None)
-    if ad is None and isinstance(reserved, dict):
-        ad = reserved.get("amount_details")
-    if ad is None:
-        return 0
-    if isinstance(ad, dict):
-        return int(ad.get("total", 0) or 0)
-    return int(getattr(ad, "total", 0) or 0)
-
-
-def _payment_intent_id_from_billing_intent(obj: Any) -> str | None:
-    for key in ("payment_intent", "latest_payment_intent"):
-        val = getattr(obj, key, None)
-        if val is None and isinstance(obj, dict):
-            val = obj.get(key)
-        if isinstance(val, str) and val.startswith("pi_"):
-            return val
-        if val is not None and getattr(val, "id", None):
-            rid = val.id
-            if isinstance(rid, str) and rid.startswith("pi_"):
-                return rid
-    return None
-
-
-def _ensure_payment_intent_succeeded(pi_id: str, pm_id: str) -> None:
-    pi = stripe.PaymentIntent.retrieve(pi_id)
-    if pi.status == "succeeded":
-        return
-    if pi.status in ("requires_confirmation", "requires_payment_method"):
-        stripe.PaymentIntent.confirm(pi_id, payment_method=pm_id, off_session=True)
-
-
-def _reserve_and_commit_automatic(
-    client: StripeClient, bi_id: str, customer_id: str, pm_id: str, currency: str
-) -> str | None:
-    reserve_resp = client.raw_request("post", f"/v2/billing/intents/{bi_id}/reserve")
-    reserved = client.deserialize(reserve_resp, api_mode="V2")
-    pi_id = _payment_intent_id_from_billing_intent(reserved)
-    total = _amount_details_total(reserved)
-
-    if not pi_id and total > 0:
-        pi = stripe.PaymentIntent.create(
-            amount=total,
-            currency=currency,
-            customer=customer_id,
-            payment_method=pm_id,
-            confirm=True,
-            off_session=True,
-        )
-        pi_id = pi.id
-    elif pi_id:
-        _ensure_payment_intent_succeeded(pi_id, pm_id)
-
-    if pi_id:
-        client.raw_request(
-            "post", f"/v2/billing/intents/{bi_id}/commit", payment_intent=pi_id
-        )
-    else:
-        client.raw_request("post", f"/v2/billing/intents/{bi_id}/commit")
-    return pi_id
-
-
-def _reserve_and_commit_send_invoice(client: StripeClient, bi_id: str) -> None:
-    client.raw_request("post", f"/v2/billing/intents/{bi_id}/reserve")
-    client.raw_request("post", f"/v2/billing/intents/{bi_id}/commit")
-
-
 def build_pricing_plan(
     client: StripeClient, cfg: dict[str, Any], ts: int, cfg_path: str
 ) -> dict[str, Any]:
@@ -399,7 +285,7 @@ def build_pricing_plan(
     meter, meter_reused, meter_event_name = _get_or_create_meter(
         client, cfg, ts, base_event, dim_keys
     )
-    value_payload_key = _meter_value_payload_key(meter)
+    value_payload_key = meter_value_payload_key(meter)
 
     metered_items_out: list[dict[str, Any]] = []
     for r in rates:
@@ -440,9 +326,9 @@ def build_pricing_plan(
         ),
         api_mode="V2",
     )
-    rc_ver = None
+    last_rate: Any = None
     for mi_entry in metered_items_out:
-        rate = client.deserialize(
+        last_rate = client.deserialize(
             client.raw_request(
                 "post",
                 f"/v2/billing/rate_cards/{rc.id}/rates",
@@ -451,17 +337,7 @@ def build_pricing_plan(
             ),
             api_mode="V2",
         )
-        v = rate.get("version") if isinstance(rate, dict) else getattr(rate, "version", None)
-        if v:
-            rc_ver = v
-    if not rc_ver:
-        rc_fetch = client.deserialize(
-            client.raw_request("get", f"/v2/billing/rate_cards/{rc.id}"),
-            api_mode="V2",
-        )
-        rc_ver = rc_fetch.get("live_version") or rc_fetch.get("latest_version")
-    if not rc_ver:
-        sys.exit("No rate card version returned from Stripe after adding rates")
+    rc_ver = resolve_rate_card_version(client, rc.id, last_rate)
 
     lic = cfg["license"]
     lic_item = client.deserialize(
@@ -486,15 +362,7 @@ def build_pricing_plan(
         ),
         api_mode="V2",
     )
-    lf_ver = _license_fee_attach_version(lf)
-    if not lf_ver:
-        lf_get = client.deserialize(
-            client.raw_request("get", f"/v2/billing/license_fees/{lf.id}"),
-            api_mode="V2",
-        )
-        lf_ver = lf_get.get("live_version") or lf_get.get("latest_version")
-    if not lf_ver:
-        sys.exit("Could not resolve license_fee version for attach.")
+    lf_ver = resolve_license_fee_version(client, lf)
 
     sa_cfg = cfg["service_action"]
     sa = client.deserialize(
@@ -548,7 +416,7 @@ def build_pricing_plan(
         api_mode="V2",
     )
     pp_ver = activated.get("live_version")
-    lic_comp = _find_license_plan_component_id(client, pp.id)
+    lic_comp = find_license_plan_component_id(client, pp.id)
 
     return {
         "pricing_plan_id": pp.id,
@@ -584,7 +452,7 @@ def main() -> None:
     if not key:
         sys.exit("STRIPE_SECRET_KEY_SANDBOX not set.")
 
-    client = StripeClient(api_key=key, stripe_version=STRIPE_PREVIEW)
+    client = StripeClient(api_key=key, stripe_version=STRIPE_PREVIEW_VERSION)
     stripe.api_key = key
 
     ts = int(time.time())
@@ -645,7 +513,7 @@ def main() -> None:
 
         pm_id: str | None = None
         if attach_pm:
-            pm_id = _create_and_attach_test_card_pm(cust.id)
+            pm_id = tok_visa_payment_method_for_customer(cust.id)
 
         bp_kwargs: dict[str, Any] = {
             "customer": cust.id,
@@ -699,15 +567,14 @@ def main() -> None:
             api_mode="V2",
         )
 
-        commit_pi: str | None = None
-        if collection_method == "automatic":
-            if not pm_id:
-                sys.exit("internal: pm_id required for automatic collection")
-            commit_pi = _reserve_and_commit_automatic(
-                client, bi.id, cust.id, pm_id, bi_currency
-            )
-        else:
-            _reserve_and_commit_send_invoice(client, bi.id)
+        commit_pi = billing_intent_reserve_and_commit(
+            client,
+            bi.id,
+            cust.id,
+            pm_id,
+            bi_currency,
+            collection_method,
+        )
 
         usage = cust_spec.get("usage") or {}
         if usage.get("events") is not None:
@@ -750,7 +617,7 @@ def main() -> None:
                         sys.exit(
                             f"Missing dimension {dk!r} in meter event for customer {row['email']}"
                         )
-                _send_meter_event(
+                send_meter_event(
                     row["customer_id"],
                     u,
                     meter_event_name,
@@ -766,7 +633,7 @@ def main() -> None:
                         f"Customer {row['email']}: usage.units not allowed when plan has "
                         "dimensions; use usage.events"
                     )
-                _send_meter_event(
+                send_meter_event(
                     row["customer_id"],
                     u,
                     meter_event_name,

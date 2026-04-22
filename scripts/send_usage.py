@@ -1,9 +1,16 @@
-from stripe import StripeClient
-import stripe
-import sys
 import os
-from config import METER_CONFIG
+import sys
+
+import stripe
 from dotenv import load_dotenv
+from stripe import StripeClient
+
+from config import METER_CONFIG
+from stripe_v2_billing_helpers import (
+    STRIPE_PREVIEW_VERSION,
+    meter_value_payload_key,
+    send_meter_event,
+)
 
 load_dotenv()
 # Load environment variables
@@ -19,7 +26,7 @@ if not STRIPE_SECRET_KEY_SANDBOX:
 # Initialize clients
 client = StripeClient(
     api_key=STRIPE_SECRET_KEY_SANDBOX,
-    stripe_version="2026-01-28.preview"
+    stripe_version=STRIPE_PREVIEW_VERSION,
 )
 stripe.api_key = STRIPE_SECRET_KEY_SANDBOX
 
@@ -102,8 +109,9 @@ def send_usage_to_pricing_plan(customer_id: str, pricing_plan_id: str, usage_val
                 meter = stripe.billing.Meter.retrieve(meter_id)
                 
                 meters_to_send[meter_id] = {
-                    'event_name': meter['event_name'],
-                    'display_name': meter['display_name']
+                    "event_name": meter["event_name"],
+                    "display_name": meter["display_name"],
+                    "value_payload_key": meter_value_payload_key(meter),
                 }
                 print(f"      → Rate: {rate.get('display_name', 'Unnamed')} -> Meter: {meter['display_name']}")
         
@@ -121,57 +129,47 @@ def send_usage_to_pricing_plan(customer_id: str, pricing_plan_id: str, usage_val
     success_count = 0
     error_count = 0
     
-    for meter_id, meter_info in meters_to_send.items():
-        event_name = meter_info['event_name']
-        display_name = meter_info['display_name']
-        
-        # Get dimension configuration from config
-        dimension_keys = METER_CONFIG.get('dimension_payload_keys', [])
-        dimension_values_map = METER_CONFIG.get('dimension_values', {})
-        
-        # If meter has dimensions, send one event per dimension value combination
+    for _meter_id, meter_info in meters_to_send.items():
+        event_name = meter_info["event_name"]
+        display_name = meter_info["display_name"]
+        value_key = meter_info["value_payload_key"]
+
+        dimension_keys = METER_CONFIG.get("dimension_payload_keys", [])
+        dimension_values_map = METER_CONFIG.get("dimension_values", {})
+
         if dimension_keys:
-            # For now, we support one dimension key (can be extended for multiple)
             dimension_key = dimension_keys[0]
-            dimension_values = dimension_values_map.get(dimension_key, ['default'])
-            
+            dimension_values = dimension_values_map.get(dimension_key, ["default"])
+
             for dimension_value in dimension_values:
-                # Build payload with dimension
-                payload = {
-                    'stripe_customer_id': customer_id,
-                    'quantity': str(usage_value),  # Use the correct event_payload_key
-                    dimension_key: dimension_value     # Add dimension (e.g., 'model': 'basic')
-                }
-                
-                # Send meter event
                 try:
-                    event = stripe.billing.MeterEvent.create(
-                        event_name=event_name,
-                        payload=payload
+                    event = send_meter_event(
+                        customer_id,
+                        usage_value,
+                        event_name,
+                        value_key,
+                        {dimension_key: str(dimension_value)},
                     )
                     print(f"✓ Sent usage to '{display_name}' ({dimension_key}={dimension_value})")
                     print(f"  Event Name: {event_name}")
                     print(f"  Event ID: {event.identifier}")
-                    print(f"  Value: {usage_value}")
+                    print(f"  Value key: {value_key} = {usage_value}")
                     print(f"  Dimension: {dimension_key}={dimension_value}\n")
                     success_count += 1
                 except Exception as e:
-                    print(f"✗ Error sending to '{display_name}' ({dimension_key}={dimension_value}): {str(e)}\n")
+                    print(
+                        f"✗ Error sending to '{display_name}' ({dimension_key}={dimension_value}): {str(e)}\n"
+                    )
                     error_count += 1
         else:
-            # No dimensions - send single event
             try:
-                event = stripe.billing.MeterEvent.create(
-                    event_name=event_name,
-                    payload={
-                        'stripe_customer_id': customer_id,
-                        'quantity': str(usage_value)
-                    }
+                event = send_meter_event(
+                    customer_id, usage_value, event_name, value_key, None
                 )
                 print(f"✓ Sent usage to '{display_name}'")
                 print(f"  Event Name: {event_name}")
                 print(f"  Event ID: {event.identifier}")
-                print(f"  Value: {usage_value}\n")
+                print(f"  Value key: {value_key} = {usage_value}\n")
                 success_count += 1
             except Exception as e:
                 print(f"✗ Error sending to '{display_name}': {str(e)}\n")
