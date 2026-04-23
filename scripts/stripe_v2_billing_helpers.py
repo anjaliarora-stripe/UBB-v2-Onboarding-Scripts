@@ -20,7 +20,7 @@ def advance_test_clock(client: StripeClient, clock_id: str, delta_seconds: int) 
         ft = c.get("frozen_time")
     cur = int(ft) if ft is not None else 0
     new_t = cur + int(delta_seconds)
-    client.v1.test_helpers.test_clocks.advance(clock_id, frozen_time=new_t)
+    client.v1.test_helpers.test_clocks.advance(clock_id, {"frozen_time": new_t})
     return new_t
 
 
