@@ -22,18 +22,20 @@ from stripe import StripeClient
 
 STRIPE_PREVIEW_VERSION = "2026-03-25.preview"
 LIST_PAGE_SIZE = 100
+# Only migrate when cadence next_billing_date is in (now, now + this]; others are skipped.
+NEXT_BILLING_WITHIN_SEC = 7 * 86400
 # Meter usage window start (UTC)
 USAGE_START = int(datetime(2026, 3, 31, 23, 59, 59, tzinfo=timezone.utc).timestamp())
 
 DEFAULT_PRICING_PLAN_TO_PRICE: dict[str, str] = {
-    "bpp_test_61UYWAYT44e1WMi9J16UYVtU9jSQKkalVhfJ3aEEaC9Y": "price_1TP8o9GKcSbvc1hc91iNWp8a",
-    "bpp_test_61UYWZ50LO6c2eNQw16UYVtU9jSQKkalVhfJ3aEEaMaO": "price_1TP8pbGKcSbvc1hcZSX2Qgv9",
-    "bpp_test_61UYWJLRB3d8RSS9j16UYVtU9jSQKkalVhfJ3aEEa9t2": "price_1TP8rSGKcSbvc1hcBlWGj7on",
-    "bpp_test_61UYWfrCT7L7aqFvz16UYVtU9jSQKkalVhfJ3aEEaRA8": "price_1TP8rSGKcSbvc1hc3zPKroWZ",
-    "bpp_test_61UYWOsMfd6iwTMXv16UYVtU9jSQKkalVhfJ3aEEaN8y": "price_1TP8rSGKcSbvc1hcJWtR84xj",
-    "bpp_test_61UYWe55Md9RuX0iV16UYVtU9jSQKkalVhfJ3aEEaGRc": "price_1TP8rSGKcSbvc1hcTvgWbx1P",
-    "bpp_test_61UYWTpTFF04ciYtk16UYVtU9jSQKkalVhfJ3aEEa2Vs": "price_1TP8sBGKcSbvc1hcWRLXTySf",
-    "bpp_test_61UYWiNl0nAgxOj8J16UYVtU9jSQKkalVhfJ3aEEaLcO": "price_1TP8sBGKcSbvc1hcwlBmLxMq",
+    "bpp_61UHSLI1OVlebhmxU16PFftvK2SQcbvDYYWHjkNkGL1E": "price_1OelH9CLWA6kvkpErdG01ENb",
+    "bpp_61UHSDpWjlhtrNS5k16PFftvK2SQcbvDYYWHjkNkGFqy": "price_1OelKECLWA6kvkpEJMU34MzC",
+    "bpp_61ULsGyqodIYGnMY516PFftvK2SQcbvDYYWHjkNkGEPw": "price_1OelMhCLWA6kvkpEqt7yTpJx",
+    "bpp_61ULsJ2ICr8tyX0LT16PFftvK2SQcbvDYYWHjkNkGQDg": "price_1OelNVCLWA6kvkpECQArVJkR",
+    "bpp_61UHSNcxCHxoyGmgd16PFftvK2SQcbvDYYWHjkNkGVMG": "price_1TP6qSCLWA6kvkpEsvYKeooz",
+    "bpp_61UHSAI4WduIoxK5k16PFftvK2SQcbvDYYWHjkNkGVou": "price_1TP6rlCLWA6kvkpE2fxLnQU2",
+    "bpp_61UHSPFs97T8xa8PY16PFftvK2SQcbvDYYWHjkNkGPXU": "price_1SGTuaCLWA6kvkpE980JLqhq",
+    "bpp_61UHRoy4oYtvt7fRm16PFftvK2SQcbvDYYWHjkNkGVqi": "price_1SGTuiCLWA6kvkpEmweD1H6N",
 }
 
 META_MAX = 500
@@ -114,6 +116,12 @@ def next_billing_ts(cadence: dict[str, Any]) -> int | None:
         except ValueError:
             return None
     return None
+
+
+def fmt_next_billing(nb: int | None) -> str:
+    if nb is None:
+        return "(unparsed)"
+    return datetime.fromtimestamp(nb, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
 
 def trunc(s: str, n: int = META_MAX) -> str:
@@ -276,7 +284,22 @@ def migrate_one(
     if customer_only and customer_id != customer_only:
         return
 
-    print(f"\n--- {sub_id}  customer={customer_id}  plan={bpp_id} → {price_id}")
+    raw_nb = cadence.get("next_billing_date")
+    nb = next_billing_ts(cadence)
+    now_ts = int(time.time())
+    horizon = now_ts + NEXT_BILLING_WITHIN_SEC
+    if nb is None or not (now_ts < nb <= horizon):
+        print(
+            f"skip {sub_id} customer={customer_id}: "
+            f"next_billing_date not within next {NEXT_BILLING_WITHIN_SEC // 86400} days "
+            f"(parsed={fmt_next_billing(nb)} unix={nb!r} api_value={raw_nb!r})"
+        )
+        return
+
+    print(
+        f"\n--- {sub_id}  customer={customer_id}  plan={bpp_id} → {price_id}  "
+        f"next_billing_date={fmt_next_billing(nb)} (unix={nb})"
+    )
 
     profile_id = _ref_id(_get(cadence, "payer", "billing_profile"))
     default_pm: str | None = None
