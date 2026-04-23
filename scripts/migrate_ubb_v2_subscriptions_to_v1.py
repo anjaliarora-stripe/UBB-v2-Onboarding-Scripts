@@ -289,6 +289,14 @@ def migrate_one(
         if isinstance(default_pm, dict):
             default_pm = default_pm.get("id")
 
+    if not default_pm:
+        cust = stripe.Customer.retrieve(
+            customer_id,
+            expand=["invoice_settings.default_payment_method"],
+        )
+        pm = _get(cust, "invoice_settings", "default_payment_method")
+        default_pm = _ref_id(pm) if pm else None
+
     plan = client.deserialize(
         client.raw_request("get", f"/v2/billing/pricing_plans/{bpp_id}"),
         api_mode="V2",
