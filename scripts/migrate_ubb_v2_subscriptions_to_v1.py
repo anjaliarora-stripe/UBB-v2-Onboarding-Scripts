@@ -3,6 +3,7 @@
 Migrate UBB v2 pricing plan subscriptions to v1 Subscriptions.
 
 Requires STRIPE_SECRET_KEY_SANDBOX. Default is dry-run; add --execute to write.
+Skips canceled subs and subs with servicing_status_transitions.will_cancel_at set.
 See --help for flags (--map-json, --customer).
 """
 
@@ -26,14 +27,14 @@ LIST_PAGE_SIZE = 100
 USAGE_START = int(datetime(2026, 3, 31, 23, 59, 59, tzinfo=timezone.utc).timestamp())
 
 DEFAULT_PRICING_PLAN_TO_PRICE: dict[str, str] = {
-    "bpp_test_61UYWAYT44e1WMi9J16UYVtU9jSQKkalVhfJ3aEEaC9Y": "price_1TP8o9GKcSbvc1hc91iNWp8a",
-    "bpp_test_61UYWZ50LO6c2eNQw16UYVtU9jSQKkalVhfJ3aEEaMaO": "price_1TP8pbGKcSbvc1hcZSX2Qgv9",
-    "bpp_test_61UYWJLRB3d8RSS9j16UYVtU9jSQKkalVhfJ3aEEa9t2": "price_1TP8rSGKcSbvc1hcBlWGj7on",
-    "bpp_test_61UYWfrCT7L7aqFvz16UYVtU9jSQKkalVhfJ3aEEaRA8": "price_1TP8rSGKcSbvc1hc3zPKroWZ",
-    "bpp_test_61UYWOsMfd6iwTMXv16UYVtU9jSQKkalVhfJ3aEEaN8y": "price_1TP8rSGKcSbvc1hcJWtR84xj",
-    "bpp_test_61UYWe55Md9RuX0iV16UYVtU9jSQKkalVhfJ3aEEaGRc": "price_1TP8rSGKcSbvc1hcTvgWbx1P",
-    "bpp_test_61UYWTpTFF04ciYtk16UYVtU9jSQKkalVhfJ3aEEa2Vs": "price_1TP8sBGKcSbvc1hcWRLXTySf",
-    "bpp_test_61UYWiNl0nAgxOj8J16UYVtU9jSQKkalVhfJ3aEEaLcO": "price_1TP8sBGKcSbvc1hcwlBmLxMq",
+    "bpp_61UHSLI1OVlebhmxU16PFftvK2SQcbvDYYWHjkNkGL1E": "price_1OelH9CLWA6kvkpErdG01ENb",
+    "bpp_61UHSDpWjlhtrNS5k16PFftvK2SQcbvDYYWHjkNkGFqy": "price_1OelKECLWA6kvkpEJMU34MzC",
+    "bpp_61ULsGyqodIYGnMY516PFftvK2SQcbvDYYWHjkNkGEPw": "price_1OelMhCLWA6kvkpEqt7yTpJx",
+    "bpp_61ULsJ2ICr8tyX0LT16PFftvK2SQcbvDYYWHjkNkGQDg": "price_1OelNVCLWA6kvkpECQArVJkR",
+    "bpp_61UHSNcxCHxoyGmgd16PFftvK2SQcbvDYYWHjkNkGVMG": "price_1TP6qSCLWA6kvkpEsvYKeooz",
+    "bpp_61UHSAI4WduIoxK5k16PFftvK2SQcbvDYYWHjkNkGVou": "price_1TP6rlCLWA6kvkpE2fxLnQU2",
+    "bpp_61UHSPFs97T8xa8PY16PFftvK2SQcbvDYYWHjkNkGPXU": "price_1SGTuaCLWA6kvkpE980JLqhq",
+    "bpp_61UHRoy4oYtvt7fRm16PFftvK2SQcbvDYYWHjkNkGVqi": "price_1SGTuiCLWA6kvkpEmweD1H6N",
 }
 
 META_MAX = 500
@@ -62,6 +63,21 @@ def _servicing_status(sub: dict[str, Any]) -> str | None:
     if isinstance(ss, dict):
         return ss.get("status")
     return ss if isinstance(ss, str) else None
+
+
+def _will_cancel_at(sub: dict[str, Any]) -> str | None:
+    """ISO timestamp when servicing is scheduled to cancel, or None."""
+    t = sub.get("servicing_status_transitions")
+    if not t:
+        return None
+    if isinstance(t, dict):
+        v = t.get("will_cancel_at")
+    else:
+        v = getattr(t, "will_cancel_at", None)
+    if v is None:
+        return None
+    s = str(v).strip()
+    return s or None
 
 
 def align_minute(ts: int) -> int:
@@ -258,6 +274,11 @@ def migrate_one(
 ) -> None:
     sub_id = pp_sub.get("id")
     if not sub_id or _servicing_status(pp_sub) == "canceled":
+        return
+
+    wca = _will_cancel_at(pp_sub)
+    if wca:
+        print(f"skip {sub_id}: servicing scheduled to cancel (will_cancel_at={wca})")
         return
 
     cadence_id = _ref_id(pp_sub.get("billing_cadence") or pp_sub.get("cadence"))
