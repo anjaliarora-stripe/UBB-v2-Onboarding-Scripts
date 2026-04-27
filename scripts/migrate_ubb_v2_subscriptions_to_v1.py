@@ -3,6 +3,7 @@
 Migrate UBB v2 pricing plan subscriptions to v1 Subscriptions.
 
 Requires STRIPE_SECRET_KEY_SANDBOX. Default is dry-run; add --execute to write.
+Skips canceled subs and subs with servicing_status_transitions.will_cancel_at set.
 See --help for flags (--map-json, --customer).
 """
 
@@ -64,6 +65,21 @@ def _servicing_status(sub: dict[str, Any]) -> str | None:
     if isinstance(ss, dict):
         return ss.get("status")
     return ss if isinstance(ss, str) else None
+
+
+def _will_cancel_at(sub: dict[str, Any]) -> str | None:
+    """ISO timestamp when servicing is scheduled to cancel, or None."""
+    t = sub.get("servicing_status_transitions")
+    if not t:
+        return None
+    if isinstance(t, dict):
+        v = t.get("will_cancel_at")
+    else:
+        v = getattr(t, "will_cancel_at", None)
+    if v is None:
+        return None
+    s = str(v).strip()
+    return s or None
 
 
 def align_minute(ts: int) -> int:
@@ -266,6 +282,11 @@ def migrate_one(
 ) -> None:
     sub_id = pp_sub.get("id")
     if not sub_id or _servicing_status(pp_sub) == "canceled":
+        return
+
+    wca = _will_cancel_at(pp_sub)
+    if wca:
+        print(f"skip {sub_id}: servicing scheduled to cancel (will_cancel_at={wca})")
         return
 
     cadence_id = _ref_id(pp_sub.get("billing_cadence") or pp_sub.get("cadence"))
