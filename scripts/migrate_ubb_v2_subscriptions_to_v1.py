@@ -11,12 +11,16 @@ we run billing-intent deactivate + cadence cancel on their active subscriptions
 to those plans (no second credit-grant sweep).
 
 Optional --customer and/or --customers-json restrict processing to those Stripe
-customer ids (union). See --help for flags.
+customer ids (union).
+
+Optional --report-csv PATH writes one UTF-8 CSV row per subscription outcome
+(migrated, dry_run_ok, skipped, error, plan_list_error). See --help for flags.
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import sys
@@ -31,8 +35,6 @@ from stripe import StripeClient
 
 STRIPE_PREVIEW_VERSION = "2026-03-25.preview"
 LIST_PAGE_SIZE = 100
-# Only migrate when cadence next_billing_date is in (now, now + this]; others are skipped.
-NEXT_BILLING_WITHIN_SEC = 7 * 86400
 # Meter usage window start (UTC)
 USAGE_START = int(datetime(2026, 3, 31, 23, 59, 59, tzinfo=timezone.utc).timestamp())
 
@@ -55,6 +57,75 @@ DEFAULT_PRICING_PLAN_TO_PRICE: dict[str, str] = {
 }
 
 META_MAX = 500
+
+REPORT_FIELDS = [
+    "timestamp_utc",
+    "customer_id",
+    "pricing_plan_subscription_id",
+    "pricing_plan_id",
+    "v1_price_id",
+    "executed",
+    "outcome",
+    "v1_subscription_id",
+    "detail",
+    "warnings",
+]
+
+
+def _report_timestamp_utc() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+class MigrationReportWriter:
+    """Append CSV rows with flush after each write."""
+
+    def __init__(self, path: str) -> None:
+        self._f = open(path, "w", newline="", encoding="utf-8")
+        self._w = csv.DictWriter(self._f, fieldnames=REPORT_FIELDS)
+        self._w.writeheader()
+        self._f.flush()
+
+    def write_row(self, row: dict[str, str]) -> None:
+        self._w.writerow(row)
+        self._f.flush()
+
+    def close(self) -> None:
+        self._f.close()
+
+
+def _report_row(
+    reporter: MigrationReportWriter | None,
+    *,
+    customer_id: str,
+    pricing_plan_subscription_id: str,
+    pricing_plan_id: str,
+    v1_price_id: str,
+    executed: bool,
+    outcome: str,
+    v1_subscription_id: str = "",
+    detail: str = "",
+    warnings: str = "",
+) -> None:
+    if reporter is None:
+        return
+    reporter.write_row(
+        {
+            "timestamp_utc": _report_timestamp_utc(),
+            "customer_id": customer_id,
+            "pricing_plan_subscription_id": pricing_plan_subscription_id,
+            "pricing_plan_id": pricing_plan_id,
+            "v1_price_id": v1_price_id,
+            "executed": "true" if executed else "false",
+            "outcome": outcome,
+            "v1_subscription_id": v1_subscription_id,
+            "detail": detail,
+            "warnings": warnings,
+        }
+    )
+
+
+def _warnings_join(parts: list[str]) -> str:
+    return "; ".join(p for p in parts if p)
 
 
 def _progress_prefix(progress: tuple[int, int] | None) -> str:
@@ -369,12 +440,19 @@ def _commit_deactivate_billing_intent(
     print(f"{pf}billing intent {iid} committed")
 
 
-def _cancel_cadence(client: StripeClient, cadence_id: str, pf: str) -> None:
+def _cancel_cadence(
+    client: StripeClient,
+    cadence_id: str,
+    pf: str,
+    warnings: list[str] | None = None,
+) -> None:
     try:
         client.raw_request("post", f"/v2/billing/cadences/{cadence_id}/cancel")
         print(f"{pf}cadence canceled")
     except Exception as e:
         print(f"{pf}cadence cancel: {e}")
+        if warnings is not None:
+            warnings.append(f"cadence_cancel: {e}")
 
 
 def deactivate_pp_subscription_and_cadence(
@@ -383,10 +461,11 @@ def deactivate_pp_subscription_and_cadence(
     bppsub_id: str,
     cadence_id: str,
     pf: str,
+    warnings: list[str] | None = None,
 ) -> None:
     """V2 billing intent deactivate + cadence cancel (no credit grants)."""
     _commit_deactivate_billing_intent(client, currency, bppsub_id, pf)
-    _cancel_cadence(client, cadence_id, pf)
+    _cancel_cadence(client, cadence_id, pf, warnings=warnings)
 
 
 def finalize_v2_teardown(
@@ -396,9 +475,12 @@ def finalize_v2_teardown(
     cadence_id: str,
     customer_id: str,
     pf: str = "",
+    warnings: list[str] | None = None,
 ) -> None:
     """Billing intent deactivate PP sub, cancel cadence, expire credit grants."""
-    deactivate_pp_subscription_and_cadence(client, currency, bppsub_id, cadence_id, pf)
+    deactivate_pp_subscription_and_cadence(
+        client, currency, bppsub_id, cadence_id, pf, warnings=warnings
+    )
 
     for g in stripe.billing.CreditGrant.list(customer=customer_id, limit=100).data or []:
         gid = getattr(g, "id", None)
@@ -407,6 +489,8 @@ def finalize_v2_teardown(
                 stripe.billing.CreditGrant.expire(gid)
             except Exception as e:
                 print(f"{pf}expire {gid}: {e}")
+                if warnings is not None:
+                    warnings.append(f"expire_grant {gid}: {e}")
 
 
 def _run_cancel_only_plans_teardown(
@@ -415,6 +499,7 @@ def _run_cancel_only_plans_teardown(
     cancel_plan_ids: set[str],
     execute: bool,
     pf: str,
+    warnings: list[str] | None = None,
 ) -> None:
     """Deactivate + cancel cadence for this customer's active subs on cancel-only plans."""
     if not cancel_plan_ids:
@@ -464,10 +549,12 @@ def _run_cancel_only_plans_teardown(
         print(f"{pf}cancel-only teardown {sid} (plan={plan_id})")
         try:
             deactivate_pp_subscription_and_cadence(
-                client, currency, sid, cadence_id, pf=pf
+                client, currency, sid, cadence_id, pf=pf, warnings=warnings
             )
         except Exception as e:
             print(f"{pf}cancel-only teardown {sid} failed: {e}")
+            if warnings is not None:
+                warnings.append(f"cancel_only_teardown {sid}: {e}")
 
 
 def migrate_one(
@@ -482,20 +569,66 @@ def migrate_one(
     cancel_plan_ids: set[str],
     cancel_hook_done: set[str],
     progress: tuple[int, int] | None = None,
+    reporter: MigrationReportWriter | None = None,
 ) -> None:
     pf = _progress_prefix(progress)
-    sub_id = pp_sub.get("id")
-    if not sub_id or _servicing_status(pp_sub) == "canceled":
+    raw_sid = pp_sub.get("id")
+    sub_id = str(raw_sid).strip() if raw_sid is not None else ""
+
+    if not sub_id:
+        _report_row(
+            reporter,
+            customer_id="",
+            pricing_plan_subscription_id="",
+            pricing_plan_id=bpp_id,
+            v1_price_id=price_id,
+            executed=execute,
+            outcome="skipped",
+            detail="missing pricing_plan_subscription id",
+        )
+        return
+
+    if _servicing_status(pp_sub) == "canceled":
+        _report_row(
+            reporter,
+            customer_id="",
+            pricing_plan_subscription_id=sub_id,
+            pricing_plan_id=bpp_id,
+            v1_price_id=price_id,
+            executed=execute,
+            outcome="skipped",
+            detail="servicing_status=canceled",
+        )
         return
 
     wca = _will_cancel_at(pp_sub)
     if wca:
         print(f"{pf}skip {sub_id}: servicing scheduled to cancel (will_cancel_at={wca})")
+        _report_row(
+            reporter,
+            customer_id="",
+            pricing_plan_subscription_id=sub_id,
+            pricing_plan_id=bpp_id,
+            v1_price_id=price_id,
+            executed=execute,
+            outcome="skipped",
+            detail=f"will_cancel_at={wca}",
+        )
         return
 
     cadence_id = _ref_id(pp_sub.get("billing_cadence") or pp_sub.get("cadence"))
     if not cadence_id:
         print(f"{pf}skip {sub_id}: no cadence")
+        _report_row(
+            reporter,
+            customer_id="",
+            pricing_plan_subscription_id=sub_id,
+            pricing_plan_id=bpp_id,
+            v1_price_id=price_id,
+            executed=execute,
+            outcome="skipped",
+            detail="no cadence on subscription",
+        )
         return
 
     cadence = client.deserialize(
@@ -505,26 +638,39 @@ def migrate_one(
     customer_id = _ref_id(_get(cadence, "payer", "customer"))
     if not customer_id:
         print(f"{pf}skip {sub_id}: no customer on cadence")
+        _report_row(
+            reporter,
+            customer_id="",
+            pricing_plan_subscription_id=sub_id,
+            pricing_plan_id=bpp_id,
+            v1_price_id=price_id,
+            executed=execute,
+            outcome="skipped",
+            detail="no customer on cadence",
+        )
         return
     if customer_allowlist is not None and customer_id not in customer_allowlist:
-        return
-
-    raw_nb = cadence.get("next_billing_date")
-    nb = next_billing_ts(cadence)
-    now_ts = int(time.time())
-    horizon = now_ts + NEXT_BILLING_WITHIN_SEC
-    if nb is None or not (now_ts < nb <= horizon):
-        print(
-            f"skip {sub_id} customer={customer_id}: "
-            f"next_billing_date not within next {NEXT_BILLING_WITHIN_SEC // 86400} days "
-            f"(parsed={fmt_next_billing(nb)} unix={nb!r} api_value={raw_nb!r})"
+        _report_row(
+            reporter,
+            customer_id=customer_id,
+            pricing_plan_subscription_id=sub_id,
+            pricing_plan_id=bpp_id,
+            v1_price_id=price_id,
+            executed=execute,
+            outcome="skipped",
+            detail="not_in_allowlist",
         )
         return
 
-    print(
-        f"\n--- {pf}{sub_id}  customer={customer_id}  plan={bpp_id} → {price_id}  "
-        f"next_billing_date={fmt_next_billing(nb)} (unix={nb})"
+    nb = next_billing_ts(cadence)
+    nb_extra = (
+        f"  next_billing_date={fmt_next_billing(nb)} (unix={nb})"
+        if nb is not None
+        else ""
     )
+    print(f"\n--- {pf}{sub_id}  customer={customer_id}  plan={bpp_id} → {price_id}{nb_extra}")
+
+    warnings_list: list[str] = []
 
     profile_id = _ref_id(_get(cadence, "payer", "billing_profile"))
     default_pm: str | None = None
@@ -563,6 +709,7 @@ def migrate_one(
         avail = credit_available_minor(cbs)
     except Exception as e:
         print(f"credit_balance_summary: {e}")
+        warnings_list.append(f"credit_balance_summary: {e}")
 
     usage_total = 0.0
     for mtr in meter_ids_for_plan(client, bpp_id):
@@ -570,6 +717,7 @@ def migrate_one(
             usage_total += meter_usage_sum(mtr, customer_id, t_usage_start, t_usage_end)
         except Exception as e:
             print(f"meter {mtr}: {e}")
+            warnings_list.append(f"meter {mtr}: {e}")
 
     anchor = cadence_to_anchor_config(cadence)
     meta_meter = str(int(usage_total)) if usage_total == int(usage_total) else str(usage_total)
@@ -587,10 +735,8 @@ def migrate_one(
         create["default_payment_method"] = default_pm
     if anchor:
         create["billing_cycle_anchor_config"] = anchor
-    else:
-        nb = next_billing_ts(cadence)
-        if nb:
-            create["billing_cycle_anchor"] = nb
+    elif nb:
+        create["billing_cycle_anchor"] = nb
 
     if not execute:
         print(
@@ -600,19 +746,77 @@ def migrate_one(
         if cancel_plan_ids and customer_id not in cancel_hook_done:
             cancel_hook_done.add(customer_id)
             _run_cancel_only_plans_teardown(
-                client, customer_id, cancel_plan_ids, execute=False, pf=pf
+                client,
+                customer_id,
+                cancel_plan_ids,
+                execute=False,
+                pf=pf,
+                warnings=warnings_list,
             )
+        _report_row(
+            reporter,
+            customer_id=customer_id,
+            pricing_plan_subscription_id=sub_id,
+            pricing_plan_id=bpp_id,
+            v1_price_id=price_id,
+            executed=False,
+            outcome="dry_run_ok",
+            warnings=_warnings_join(warnings_list),
+        )
         return
 
-    sub_v1 = stripe.Subscription.create(**create)
-    print(f"{pf}v1 subscription {sub_v1.id}")
+    sub_v1_id = ""
+    try:
+        sub_v1 = stripe.Subscription.create(**create)
+        sub_v1_id = sub_v1.id
+        print(f"{pf}v1 subscription {sub_v1_id}")
 
-    finalize_v2_teardown(client, currency, sub_id, cadence_id, customer_id, pf=pf)
+        finalize_v2_teardown(
+            client,
+            currency,
+            sub_id,
+            cadence_id,
+            customer_id,
+            pf=pf,
+            warnings=warnings_list,
+        )
 
-    if cancel_plan_ids and customer_id not in cancel_hook_done:
-        cancel_hook_done.add(customer_id)
-        _run_cancel_only_plans_teardown(
-            client, customer_id, cancel_plan_ids, execute=True, pf=pf
+        if cancel_plan_ids and customer_id not in cancel_hook_done:
+            cancel_hook_done.add(customer_id)
+            _run_cancel_only_plans_teardown(
+                client,
+                customer_id,
+                cancel_plan_ids,
+                execute=True,
+                pf=pf,
+                warnings=warnings_list,
+            )
+
+        _report_row(
+            reporter,
+            customer_id=customer_id,
+            pricing_plan_subscription_id=sub_id,
+            pricing_plan_id=bpp_id,
+            v1_price_id=price_id,
+            executed=True,
+            outcome="migrated",
+            v1_subscription_id=sub_v1_id,
+            warnings=_warnings_join(warnings_list),
+        )
+    except Exception as e:
+        detail = f"{type(e).__name__}: {e}"
+        print(f"{pf}migrate failed for {sub_id}: {detail}")
+        _report_row(
+            reporter,
+            customer_id=customer_id,
+            pricing_plan_subscription_id=sub_id,
+            pricing_plan_id=bpp_id,
+            v1_price_id=price_id,
+            executed=True,
+            outcome="error",
+            v1_subscription_id=sub_v1_id,
+            detail=detail,
+            warnings=_warnings_join(warnings_list),
         )
 
 
@@ -657,6 +861,7 @@ def main() -> None:
         epilog=(
             "Examples: dry-run;  --execute;  --execute --customer cus_XXX;  "
             "--customers-json scripts/customers_allowlist.sample.json;  "
+            "--report-csv migration_report.csv;  "
             "--cancel-map-json cancel_plans.json"
         ),
     )
@@ -672,6 +877,11 @@ def main() -> None:
         "--customers-json",
         metavar="PATH",
         help="JSON array of Stripe customer ids (cus_...); union with --customer if both set",
+    )
+    p.add_argument(
+        "--report-csv",
+        metavar="PATH",
+        help="write UTF-8 CSV audit (per bpps row: outcome, errors, v1 sub id)",
     )
     args = p.parse_args()
 
@@ -708,28 +918,47 @@ def main() -> None:
     if allow_ids:
         customer_allowlist = allow_ids
 
-    for bpp_id, price_id in plan_map.items():
-        print(f"\nplan {bpp_id}")
-        try:
-            pp_rows = list(iter_plan_subscriptions(client, bpp_id))
-            n_subs = len(pp_rows)
-            print(f"pricing_plan_subscriptions listed for this plan: {n_subs}")
-            for idx, pp_sub in enumerate(pp_rows, start=1):
-                migrate_one(
-                    client,
-                    bpp_id,
-                    price_id,
-                    pp_sub,
-                    t0,
-                    t1,
-                    args.execute,
-                    customer_allowlist,
-                    cancel_plan_ids,
-                    cancel_hook_done,
-                    progress=(idx, n_subs),
+    reporter: MigrationReportWriter | None = None
+    try:
+        if args.report_csv:
+            reporter = MigrationReportWriter(args.report_csv)
+
+        for bpp_id, price_id in plan_map.items():
+            print(f"\nplan {bpp_id}")
+            try:
+                pp_rows = list(iter_plan_subscriptions(client, bpp_id))
+                n_subs = len(pp_rows)
+                print(f"pricing_plan_subscriptions listed for this plan: {n_subs}")
+                for idx, pp_sub in enumerate(pp_rows, start=1):
+                    migrate_one(
+                        client,
+                        bpp_id,
+                        price_id,
+                        pp_sub,
+                        t0,
+                        t1,
+                        args.execute,
+                        customer_allowlist,
+                        cancel_plan_ids,
+                        cancel_hook_done,
+                        progress=(idx, n_subs),
+                        reporter=reporter,
+                    )
+            except Exception as e:
+                print(f"list subscriptions for {bpp_id}: {e}")
+                _report_row(
+                    reporter,
+                    customer_id="",
+                    pricing_plan_subscription_id="",
+                    pricing_plan_id=bpp_id,
+                    v1_price_id=price_id,
+                    executed=args.execute,
+                    outcome="plan_list_error",
+                    detail=f"{type(e).__name__}: {e}",
                 )
-        except Exception as e:
-            print(f"list subscriptions for {bpp_id}: {e}")
+    finally:
+        if reporter is not None:
+            reporter.close()
 
 
 if __name__ == "__main__":
